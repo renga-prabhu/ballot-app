@@ -5,6 +5,8 @@ const cors = require("cors");
 const axios = require("axios");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
+const Profile = require("./models/Profile");
+
 
 dotenv.config();
 
@@ -40,6 +42,19 @@ connectDB();
 // In-memory user profiles (temporary until DB schema added)
 // -----------------------------------------------------
 const userProfiles = {};
+
+app.post("/submit", async (req, res) => {
+  try {
+    const profile = new Profile(req.body);
+    await profile.save();
+
+    res.json({ success: true, id: profile._id });
+  } catch (err) {
+    console.log("Save error:", err.message);
+    res.status(500).json({ success: false });
+  }
+});
+
 
 // -----------------------------------------------------
 // Save demographics
