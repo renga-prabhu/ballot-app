@@ -24,10 +24,7 @@ const MONGO_URI = process.env.MONGO_URI;
 // -----------------------------------------------------
 async function connectDB() {
   try {
-    await mongoose.connect(MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
+    await mongoose.connect(MONGO_URI);
 
     console.log("✅ Connected to MongoDB Atlas");
   } catch (err) {
@@ -35,6 +32,7 @@ async function connectDB() {
     console.log(err.message);
   }
 }
+
 
 connectDB();
 
