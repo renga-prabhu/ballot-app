@@ -1,83 +1,144 @@
-// backend/server.js
+// server.js — CommonJS Version (Works with your Node setup)
 
 const express = require("express");
 const cors = require("cors");
 const axios = require("axios");
-const fs = require("fs");
-const path = require("path");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const RECAPTCHA_SECRET = "YOUR_RECAPTCHA_SECRET_KEY"; // replace later
-const filePath = path.join(__dirname, "profiles.json");
+const PORT = 4000;
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
-// Save profile data
-app.post("/profile", async (req, res) => {
-  const { captchaToken, ...profileData } = req.body;
+// In-memory user profiles
+const userProfiles = {};
 
-  try {
-    const response = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${captchaToken}`
-    );
+// -----------------------------------------------------
+// Save demographics
+// -----------------------------------------------------
+app.post("/user/init", (req, res) => {
+  const { userId, ageRange, politicalLean, topIssues } = req.body;
 
-    if (!response.data.success) {
-      return res.status(400).json({ message: "Captcha verification failed" });
-    }
-
-    let profiles = [];
-    if (fs.existsSync(filePath)) {
-      profiles = JSON.parse(fs.readFileSync(filePath));
-    }
-
-    profiles.push(profileData);
-    fs.writeFileSync(filePath, JSON.stringify(profiles, null, 2));
-
-    res.json({ message: "Profile data stored successfully" });
-  } catch (err) {
-    console.error("Captcha verification error:", err);
-    res.status(500).json({ message: "Server error verifying captcha" });
+  if (!userId) {
+    return res.json({ error: "Missing userId" });
   }
-});
 
-// NEW: Get all saved profiles
-app.get("/profiles", (req, res) => {
-  try {
-    if (fs.existsSync(filePath)) {
-      const profiles = JSON.parse(fs.readFileSync(filePath));
-      res.json({ profiles });
-    } else {
-      res.json({ profiles: [] });
-    }
-  } catch (err) {
-    console.error("Error reading profiles:", err);
-    res.status(500).json({ message: "Server error reading profiles" });
-  }
-});
-
-// Ballot route (mocked)
-app.get("/ballot", (req, res) => {
-  const { zip } = req.query;
-  const ballotData = {
-    "10001": [
-      { id: 1, title: "Presidential Election", summary: "Candidates for President" },
-      { id: 2, title: "U.S. Senate Election", summary: "Candidates for Senate" }
-    ],
-    "28801": [
-      { id: 1, title: "Presidential Election", summary: "Candidates for President" },
-      { id: 2, title: "U.S. Senate Election", summary: "Candidates for Senate" }
-    ]
+  userProfiles[userId] = {
+    ageRange,
+    politicalLean,
+    topIssues
   };
 
-  const items = ballotData[zip] || [
-    { id: 1, title: "Presidential Election", summary: "Candidates for President" },
-    { id: 2, title: "U.S. Senate Election", summary: "Candidates for Senate" }
-  ];
-
-  res.json({ items });
+  res.json({ success: true });
 });
 
-app.listen(4000, () => {
-  console.log("Backend running at http://localhost:4000");
+// -----------------------------------------------------
+// AI Explanation (NO BALLOT DEPENDENCY)
+// -----------------------------------------------------
+app.post("/ai/explain", async (req, res) => {
+  const {
+    userId,
+    zip,
+    cityState,
+    ageRange,
+    politicalLean,
+    topIssues,
+    question
+  } = req.body;
+
+  if (!userId || !zip || !question) {
+    return res.json({ error: "Missing required fields." });
+  }
+
+  const userProfile = userProfiles[userId];
+  if (!userProfile) {
+    return res.json({ error: "User profile not found." });
+  }
+
+  const prompt = `
+You are a non-partisan civic literacy assistant.
+
+User profile (anonymous):
+- Age range: ${ageRange}
+- Political lean: ${politicalLean || "Not provided"}
+- Top issues: ${topIssues.join(", ")}
+
+Location:
+- ZIP: ${zip}
+- City/State: ${cityState}
+
+Voter Question:
+${question}
+
+Rules:
+- Stay strictly neutral.
+- Do NOT recommend who to vote for.
+- Do NOT advocate for or against any candidate or party.
+- Explain offices, processes, and issues clearly.
+- Present multiple sides fairly when relevant.
+- Encourage critical thinking and further research.
+
+Now provide a clear, calm, educational explanation.
+`;
+
+  try {
+    const aiRes = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are a non-partisan civic literacy assistant." },
+          { role: "user", content: prompt }
+        ]
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${OPENAI_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    const answer = aiRes.data.choices[0].message.content;
+    res.json({ answer });
+
+  } catch (err) {
+  console.log("══════════════════════════════════════");
+  console.log("🔥 FULL AI ERROR DEBUG");
+  console.log("══════════════════════════════════════");
+
+  console.log("• err.message:", err.message);
+  console.log("• err.code:", err.code);
+  console.log("• err.name:", err.name);
+
+  console.log("• err.response?.status:", err.response?.status);
+  console.log("• err.response?.statusText:", err.response?.statusText);
+
+  console.log("• err.response?.data:", JSON.stringify(err.response?.data, null, 2));
+
+  console.log("• err.response?.headers:", err.response?.headers);
+
+  console.log("• err.config.url:", err.config?.url);
+  console.log("• err.config.method:", err.config?.method);
+  console.log("• err.config.headers:", err.config?.headers);
+  console.log("• err.config.data:", err.config?.data);
+
+  console.log("══════════════════════════════════════");
+
+  res.json({
+    answer: "I couldn't generate a response, but I can try again."
+  });
+}
+
+});
+
+// -----------------------------------------------------
+// Start server
+// -----------------------------------------------------
+app.listen(PORT, () => {
+  console.log(`Backend running on http://localhost:${PORT}`);
 });
