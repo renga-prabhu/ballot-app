@@ -348,7 +348,9 @@ function App() {
             {ballotError && <p style={styles.infoText}>{ballotError}</p>}
             {!ballotError && !contests.length && (
               <p style={styles.infoText}>
-                No ballot information is available for this ZIP code at this time.
+                {ballot?.specificity === "exact"
+                  ? "Contest details are not available for this election yet."
+                  : "No ballot information is available for this ZIP code at this time."}
               </p>
             )}
             {!!contests.length && (
