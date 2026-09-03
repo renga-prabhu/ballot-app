@@ -176,6 +176,14 @@ app.post("/ai/explain", async (req, res) => {
     return res.json({ error: "Missing required fields." });
   }
 
+  const recommendationRequest = /who should I vote for|which candidate should I vote for|who should I support|which one is better|rank (the )?candidates|best candidate|match me with|recommend (a|the) candidate|personalized voting recommendation|tell me who to vote for/i.test(question);
+
+  if (recommendationRequest) {
+    return res.json({
+      answer: "I cannot recommend, rank, or match you with candidates. I can explain the offices, summarize ballot items, compare publicly stated positions fairly, or describe how the voting process works."
+    });
+  }
+
   let userProfile;
   try {
     userProfile = await Profile.findOne({ userId }).lean();
@@ -211,10 +219,15 @@ ${question}
 
 Rules:
 - Stay strictly neutral.
-- Do NOT recommend who to vote for.
-- Do NOT advocate for or against any candidate or party.
-- Explain offices, processes, and issues clearly.
-- Present multiple sides fairly when relevant.
+- Explain issues, ballot items, offices, and civic processes in plain language.
+- Summarize publicly available information accurately and distinguish facts from claims.
+- Outline relevant perspectives or pros and cons without implying which side is correct.
+- Show factual differences between candidates or positions without ranking them.
+- Never tell the user who to vote for or which choice is best.
+- Never rank candidates or match the user to a candidate.
+- Never generate personalized voting recommendations, endorsements, or campaign strategy.
+- If asked for a recommendation, politely refuse and offer neutral civic information instead.
+- Do not use the user's age, political lean, or issues to predict or recommend a vote.
 - Encourage critical thinking and further research.
 
 Now provide a clear, calm, educational explanation.
