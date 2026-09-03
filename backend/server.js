@@ -229,6 +229,10 @@ app.post("/ai/explain", aiLimiter, async (req, res) => {
     });
   }
 
+  if (!OPENAI_KEY) {
+    return res.status(503).json({ error: "Civic AI is not configured yet." });
+  }
+
   let userProfile;
   try {
     userProfile = await Profile.findOne({ userId }).lean();

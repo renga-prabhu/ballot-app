@@ -174,9 +174,9 @@ function App() {
       });
 
       const data = await res.json();
-      setAnswer(data.answer || "No response from AI.");
+      setAnswer(data.answer || data.error || "The Civic AI could not respond right now.");
     } catch {
-      setAnswer("⚠️ AI could not respond. Try again.");
+      setAnswer("The Civic AI could not respond right now. Please try again.");
     }
 
     setLoadingAI(false);
@@ -190,7 +190,7 @@ function App() {
       </p>
       <textarea
         style={styles.textarea}
-        placeholder="What does this office do?"
+        placeholder="What would this ballot measure change in my community?"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
       />
