@@ -32,30 +32,54 @@ function App() {
   const [answer, setAnswer] = useState("");
   const [loadingAI, setLoadingAI] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+  const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
-  const shareSite = async () => {
-    const shareData = {
-      title: "Know Your Ballot",
-      text: "Explore your ballot and build civic clarity with Know Your Ballot.",
-      url: window.location.href
-    };
+  const shareUrl = encodeURIComponent(window.location.href);
+  const shareText = encodeURIComponent("Explore your ballot and build civic clarity with Know Your Ballot.");
+  const socialLinks = [
+    { name: "X", mark: "X", url: `https://x.com/intent/post?text=${shareText}&url=${shareUrl}` },
+    { name: "Bluesky", mark: "b", url: `https://bsky.app/intent/compose?text=${shareText}%20${shareUrl}` },
+    { name: "Facebook", mark: "f", url: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` },
+    { name: "LinkedIn", mark: "in", url: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}` },
+    { name: "WhatsApp", mark: "wa", url: `https://wa.me/?text=${shareText}%20${shareUrl}` },
+    { name: "Instagram", mark: "ig", url: "https://www.instagram.com/" },
+    { name: "TikTok", mark: "tk", url: "https://www.tiktok.com/" },
+    { name: "Reddit", mark: "r", url: `https://www.reddit.com/submit?url=${shareUrl}&title=${shareText}` }
+  ];
 
+  const copySiteLink = async () => {
     try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-        setShareStatus("Thanks for sharing");
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        setShareStatus("Link copied");
-      }
-    } catch (error) {
-      if (error.name !== "AbortError") {
-        setShareStatus("Copy the site link from your browser to share it");
-      }
+      await navigator.clipboard.writeText(window.location.href);
+      setShareStatus("Link copied");
+    } catch {
+      setShareStatus("Copy the site link from your browser");
     }
-
     window.setTimeout(() => setShareStatus(""), 2500);
   };
+
+  const shareMenu = (
+    <div style={styles.shareMenu}>
+      <div style={styles.socialGrid}>
+        {socialLinks.map((social) => (
+          <a
+            key={social.name}
+            style={styles.socialLink}
+            href={social.url}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setShareMenuOpen(false)}
+            title={`Share on ${social.name}`}
+          >
+            <span style={styles.socialMark} aria-hidden="true">{social.mark}</span>
+            <span>{social.name}</span>
+          </a>
+        ))}
+      </div>
+      <button type="button" style={styles.copyLink} onClick={copySiteLink}>
+        Copy link
+      </button>
+    </div>
+  );
 
   // ZIP validation
   const validateZip = async (zipValue) => {
@@ -202,12 +226,13 @@ function App() {
               <button
                 type="button"
                 style={styles.shareButton}
-                onClick={shareSite}
+                onClick={() => setShareMenuOpen((isOpen) => !isOpen)}
                 title="Share Know Your Ballot"
                 aria-label="Share Know Your Ballot"
               >
                 <span aria-hidden="true">↗</span> Share this site
               </button>
+              {shareMenuOpen && shareMenu}
               {shareStatus && <p style={styles.shareStatus}>{shareStatus}</p>}
             </div>
           </div>
@@ -459,12 +484,13 @@ function App() {
             <button
               type="button"
               style={styles.shareButton}
-              onClick={shareSite}
+              onClick={() => setShareMenuOpen((isOpen) => !isOpen)}
               title="Share Know Your Ballot"
               aria-label="Share Know Your Ballot"
             >
               <span aria-hidden="true">↗</span> Share this site
             </button>
+            {shareMenuOpen && shareMenu}
             {shareStatus && <p style={styles.shareStatus}>{shareStatus}</p>}
           </div>
         </div>
@@ -586,6 +612,54 @@ const styles = {
     fontSize: "12px",
     color: "#F7E27A",
     margin: "8px 0 0 10px"
+  },
+  shareMenu: {
+    marginTop: "12px",
+    padding: "12px",
+    borderRadius: "12px",
+    background: "rgba(255,255,255,0.94)",
+    border: "1px solid rgba(255,255,255,0.65)",
+    boxShadow: "0 5px 18px rgba(0,0,0,0.18)"
+  },
+  socialGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: "8px"
+  },
+  socialLink: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "5px",
+    minWidth: 0,
+    padding: "7px 3px",
+    color: "#1A2B5F",
+    textDecoration: "none",
+    fontSize: "11px",
+    fontWeight: "600"
+  },
+  socialMark: {
+    display: "grid",
+    placeItems: "center",
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    background: "#1A2B5F",
+    color: "#FFFFFF",
+    fontSize: "14px",
+    fontWeight: "700"
+  },
+  copyLink: {
+    width: "100%",
+    marginTop: "10px",
+    padding: "9px",
+    border: "1px solid rgba(26,43,95,0.24)",
+    borderRadius: "8px",
+    background: "#FFFFFF",
+    color: "#1A2B5F",
+    fontSize: "12px",
+    fontWeight: "600",
+    cursor: "pointer"
   },
 
   /* LIQUID GOLD STARS */
