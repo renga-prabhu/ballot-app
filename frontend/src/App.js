@@ -31,6 +31,31 @@ function App() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [loadingAI, setLoadingAI] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
+
+  const shareSite = async () => {
+    const shareData = {
+      title: "Know Your Ballot",
+      text: "Explore your ballot and build civic clarity with Know Your Ballot.",
+      url: window.location.href
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        setShareStatus("Thanks for sharing");
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setShareStatus("Link copied");
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") {
+        setShareStatus("Copy the site link from your browser to share it");
+      }
+    }
+
+    window.setTimeout(() => setShareStatus(""), 2500);
+  };
 
   // ZIP validation
   const validateZip = async (zipValue) => {
@@ -174,6 +199,16 @@ function App() {
               <p style={styles.heroTag}>
                 The Civic Clarity Project — Guiding American Choices
               </p>
+              <button
+                type="button"
+                style={styles.shareButton}
+                onClick={shareSite}
+                title="Share Know Your Ballot"
+                aria-label="Share Know Your Ballot"
+              >
+                <span aria-hidden="true">↗</span> Share this site
+              </button>
+              {shareStatus && <p style={styles.shareStatus}>{shareStatus}</p>}
             </div>
           </div>
 
@@ -421,6 +456,16 @@ function App() {
             <p style={styles.heroLocation}>
               Serving voters in {cityState || "your community"} ({zip || "ZIP unknown"})
             </p>
+            <button
+              type="button"
+              style={styles.shareButton}
+              onClick={shareSite}
+              title="Share Know Your Ballot"
+              aria-label="Share Know Your Ballot"
+            >
+              <span aria-hidden="true">↗</span> Share this site
+            </button>
+            {shareStatus && <p style={styles.shareStatus}>{shareStatus}</p>}
           </div>
         </div>
 
@@ -524,6 +569,23 @@ const styles = {
     color: "#F9FAFB",
     marginTop: "10px",
     opacity: 0.9
+  },
+  shareButton: {
+    marginTop: "16px",
+    padding: "9px 13px",
+    fontSize: "13px",
+    fontWeight: "600",
+    color: "#FFFFFF",
+    background: "rgba(255,255,255,0.16)",
+    border: "1px solid rgba(255,255,255,0.5)",
+    borderRadius: "10px",
+    cursor: "pointer"
+  },
+  shareStatus: {
+    display: "inline-block",
+    fontSize: "12px",
+    color: "#F7E27A",
+    margin: "8px 0 0 10px"
   },
 
   /* LIQUID GOLD STARS */
