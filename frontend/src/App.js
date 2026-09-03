@@ -145,7 +145,8 @@ function App() {
     { name: "WhatsApp", icon: "https://cdn.simpleicons.org/whatsapp/25D366", url: `https://wa.me/?text=${shareText}%20${shareUrl}` },
     { name: "Instagram", icon: "https://cdn.simpleicons.org/instagram/E4405F", url: "https://www.instagram.com/" },
     { name: "TikTok", icon: "https://cdn.simpleicons.org/tiktok/000000", url: "https://www.tiktok.com/" },
-    { name: "Reddit", icon: "https://cdn.simpleicons.org/reddit/FF4500", url: `https://www.reddit.com/submit?url=${shareUrl}&title=${shareText}` }
+    { name: "Reddit", icon: "https://cdn.simpleicons.org/reddit/FF4500", url: `https://www.reddit.com/submit?url=${shareUrl}&title=${shareText}` },
+    { name: "Truth Social", icon: null, url: "https://truthsocial.com/" }
   ];
 
   const copySiteLink = async () => {
@@ -170,9 +171,15 @@ function App() {
             rel="noreferrer"
             title={`Share on ${social.name}`}
           >
-            <span style={styles.socialMark}>
-              <img src={social.icon} alt="" aria-hidden="true" style={styles.socialIcon} />
-            </span>
+            {social.icon ? (
+              <span style={styles.socialMark}>
+                <img src={social.icon} alt="" aria-hidden="true" style={styles.socialIcon} />
+              </span>
+            ) : (
+              <span style={{ ...styles.socialMark, background: "#FF0000", color: "#FFFFFF" }}>
+                <span aria-hidden="true" style={{ fontSize: "10px", fontWeight: "700" }}>T</span>
+              </span>
+            )}
             <span>{social.name}</span>
           </a>
         ))}
