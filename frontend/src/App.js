@@ -17,6 +17,7 @@ function App() {
   const [topIssues, setTopIssues] = useState([]);
 
   // ZIP + city/state
+  const [address, setAddress] = useState("");
   const [zip, setZip] = useState("");
   const [cityState, setCityState] = useState("");
   const [zipValid, setZipValid] = useState(false);
@@ -80,7 +81,7 @@ function App() {
       const ballotRes = await fetch(`${API_BASE_URL}/ballot/lookup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ city, state, zip })
+        body: JSON.stringify({ address: address.trim(), city, state, zip })
       });
       const ballotData = await ballotRes.json();
 
@@ -277,6 +278,18 @@ function App() {
               readOnly
             />
 
+            <label style={styles.label}>Exact address (optional)</label>
+            <input
+              style={styles.input}
+              placeholder="Add for a more precise ballot"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              autoComplete="street-address"
+            />
+            <p style={styles.helperText}>
+              Without an address, results are general to your ZIP and may not match every district.
+            </p>
+
             {/* Continue */}
             <button
               style={
@@ -327,6 +340,11 @@ function App() {
             </h2>
             {ballot?.election?.electionDay && (
               <p style={styles.electionDate}>Election day: {ballot.election.electionDay}</p>
+            )}
+            {ballot?.specificity !== "exact" && (
+              <p style={styles.caveat}>
+                General ZIP-based information. It may not include every county or district contest for your address.
+              </p>
             )}
             {ballotError && <p style={styles.errorText}>{ballotError}</p>}
             {!ballotError && !contests.length && (
@@ -568,9 +586,25 @@ const styles = {
     lineHeight: "1.5",
     color: "#4B5563"
   },
+  helperText: {
+    fontSize: "12px",
+    lineHeight: "1.4",
+    color: "#6B7280",
+    marginTop: "-4px",
+    marginBottom: "12px"
+  },
   electionDate: {
     fontSize: "14px",
     color: "#4B5563",
+    marginBottom: "16px"
+  },
+  caveat: {
+    fontSize: "13px",
+    lineHeight: "1.45",
+    color: "#7C2D12",
+    background: "rgba(234, 88, 12, 0.09)",
+    borderLeft: "3px solid #EA580C",
+    padding: "10px 12px",
     marginBottom: "16px"
   },
   errorText: {

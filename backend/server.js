@@ -95,7 +95,7 @@ app.post("/user/init", async (req, res) => {
 // Look up the user's current ballot
 // -----------------------------------------------------
 app.post("/ballot/lookup", async (req, res) => {
-  const { city, state, zip } = req.body;
+  const { address, city, state, zip } = req.body;
 
   if (!city || !state || !zip) {
     return res.status(400).json({ error: "A valid ZIP code is required." });
@@ -110,7 +110,9 @@ app.post("/ballot/lookup", async (req, res) => {
       "https://www.googleapis.com/civicinfo/v2/voterinfo",
       {
         params: {
-          address: `${city}, ${state} ${zip}`,
+          address: address
+            ? `${address}, ${city}, ${state} ${zip}`
+            : `${city}, ${state} ${zip}`,
           officialOnly: true,
           key: GOOGLE_CIVIC_API_KEY
         }
@@ -123,6 +125,7 @@ app.post("/ballot/lookup", async (req, res) => {
       otherElections: data.otherElections || [],
       contests: data.contests || [],
       electionOffice: data.state?.[0]?.electionAdministrationBody || null,
+      specificity: address ? "exact" : "general",
       source: "Google Civic Information API"
     });
   } catch (err) {
