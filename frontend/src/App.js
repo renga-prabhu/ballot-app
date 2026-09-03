@@ -22,10 +22,10 @@ function getFollowUpPrompts(firstQuestion, topics, cityState) {
 
   if (topic) {
     return [
-      `How could ${topic.toLowerCase()} affect voters in ${location}?`,
-      `What are the main ${topic.toLowerCase()} facts I should verify?`,
-      `What does ${topic.toLowerCase()} look like at the local level?`,
-      `What are the different perspectives on ${topic.toLowerCase()}?`
+      `How could the ${topic.toLowerCase()} affect voters in ${location}?`,
+      `What are the main facts about the ${topic.toLowerCase()} I should verify?`,
+      `What does the ${topic.toLowerCase()} look like at the local level?`,
+      `What are the different perspectives on the ${topic.toLowerCase()}?`
     ];
   }
 
@@ -114,9 +114,9 @@ function App() {
     ? getFollowUpPrompts(firstQuestion, personalTopics, cityState)
     : personalTopics.length
       ? [
-          `What are voters asking about ${personalTopics[0].toLowerCase()} in ${cityState || "my area"}?`,
-          `What should I know about ${personalTopics[0].toLowerCase()} before voting?`,
-          `What are the key facts about ${personalTopics[0].toLowerCase()}?`,
+          `What are voters asking about the ${personalTopics[0].toLowerCase()} in ${cityState || "my area"}?`,
+          `What should I know about the ${personalTopics[0].toLowerCase()} before voting?`,
+          `What are the key facts about the ${personalTopics[0].toLowerCase()}?`,
           ...starterPrompts.slice(0, 3)
         ]
       : starterPrompts;
