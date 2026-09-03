@@ -21,6 +21,7 @@ const PORT = process.env.PORT || 4000;
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 const MONGO_URI = process.env.MONGO_URI;
 const GOOGLE_CIVIC_API_KEY = process.env.GOOGLE_CIVIC_API_KEY;
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
 
 // -----------------------------------------------------
 // MongoDB Connection
@@ -61,10 +62,29 @@ app.post("/submit", async (req, res) => {
 // Save demographics
 // -----------------------------------------------------
 app.post("/user/init", async (req, res) => {
-  const { userId, ageRange, politicalLean, topIssues, zip, cityState } = req.body;
+  const { userId, ageRange, politicalLean, topIssues, zip, cityState, captchaToken } = req.body;
 
   if (!userId) {
     return res.status(400).json({ error: "Missing userId" });
+  }
+
+  if (!RECAPTCHA_SECRET || !captchaToken) {
+    return res.status(403).json({ error: "Verification is required." });
+  }
+
+  try {
+    const captchaRes = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      null,
+      { params: { secret: RECAPTCHA_SECRET, response: captchaToken } }
+    );
+
+    if (!captchaRes.data.success) {
+      return res.status(403).json({ error: "Verification failed. Please try again." });
+    }
+  } catch (err) {
+    console.log("reCAPTCHA verification error:", err.message);
+    return res.status(502).json({ error: "Verification is temporarily unavailable." });
   }
 
   const profileData = {

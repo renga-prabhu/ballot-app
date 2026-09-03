@@ -2,8 +2,10 @@
 // Liquid UX + Hero-Only Liquid Gold + subtle patriotic palette
 
 import React, { useState } from "react";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "https://shimmering-success-production-bd96.up.railway.app";
+const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
 
 function App() {
   const [userId] = useState(() => crypto.randomUUID());
@@ -26,6 +28,7 @@ function App() {
   const [ballot, setBallot] = useState(null);
   const [ballotError, setBallotError] = useState("");
   const [loadingBallot, setLoadingBallot] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
 
   // AI chat
   const [question, setQuestion] = useState("");
@@ -120,7 +123,8 @@ function App() {
           politicalLean,
           topIssues,
           zip,
-          cityState
+          cityState,
+          captchaToken
         })
       });
 
@@ -350,14 +354,26 @@ function App() {
               Without an address, results are general to your ZIP and may not match every district.
             </p>
 
+            <div style={styles.captchaWrap}>
+              {RECAPTCHA_SITE_KEY ? (
+                <ReCAPTCHA
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={(token) => setCaptchaToken(token || "")}
+                  onExpired={() => setCaptchaToken("")}
+                />
+              ) : (
+                <p style={styles.captchaMessage}>Verification is not configured yet.</p>
+              )}
+            </div>
+
             {/* Continue */}
             <button
               style={
-                zipValid && ageRange && !loadingBallot
+                zipValid && ageRange && captchaToken && !loadingBallot
                   ? styles.button
                   : styles.buttonDisabled
               }
-              onClick={zipValid && ageRange && !loadingBallot ? continueToBallot : null}
+              onClick={zipValid && ageRange && captchaToken && !loadingBallot ? continueToBallot : null}
             >
               Continue to Civic AI
             </button>
@@ -729,6 +745,18 @@ const styles = {
     color: "#6B7280",
     marginTop: "-4px",
     marginBottom: "12px"
+  },
+  captchaWrap: {
+    minHeight: "78px",
+    display: "flex",
+    alignItems: "center",
+    margin: "4px 0 12px",
+    overflowX: "auto"
+  },
+  captchaMessage: {
+    fontSize: "12px",
+    color: "#7C2D12",
+    margin: 0
   },
   electionDate: {
     fontSize: "14px",
