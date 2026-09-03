@@ -64,11 +64,20 @@ function getRequestType(question) {
   return "general";
 }
 
+function getQuestionTopics(question) {
+  const topicNames = [
+    "Economy", "Healthcare", "Education", "Environment", "Immigration",
+    "Civil Rights", "Foreign Policy", "Crime & Safety", "Housing", "Taxes"
+  ];
+  return topicNames.filter((topic) => question.toLowerCase().includes(topic.toLowerCase()));
+}
+
 function conversationUpdate(userId, zip, question, answer, topics) {
+  const questionTopics = getQuestionTopics(question);
   return {
     $set: {
       lastMessageAt: new Date(),
-      topics: Array.isArray(topics) ? topics.slice(0, 10) : [],
+      topics: [...new Set([...(Array.isArray(topics) ? topics : []), ...questionTopics])].slice(0, 10),
       requestType: getRequestType(question)
     },
     $setOnInsert: { userId, zip, startedAt: new Date() },
@@ -243,6 +252,38 @@ app.get("/conversation/:userId", async (req, res) => {
   } catch (err) {
     console.log("Conversation lookup error:", err.message);
     res.status(500).json({ error: "Unable to load conversation." });
+  }
+});
+
+app.get("/insights/trending", async (req, res) => {
+  const { zip } = req.query;
+
+  if (!/^\d{5}$/.test(zip || "")) {
+    return res.status(400).json({ error: "Invalid ZIP code." });
+  }
+
+  try {
+    const recentConversations = await Conversation.find({
+      zip,
+      updatedAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+    }).select("topics").lean();
+    const topicCounts = {};
+
+    recentConversations.forEach((conversation) => {
+      (conversation.topics || []).forEach((topic) => {
+        topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+      });
+    });
+
+    const topics = Object.entries(topicCounts)
+      .sort(([, countA], [, countB]) => countB - countA)
+      .slice(0, 5)
+      .map(([topic]) => topic);
+
+    res.json({ topics, basedOnConversations: recentConversations.length });
+  } catch (err) {
+    console.log("Trending insights error:", err.message);
+    res.status(500).json({ error: "Unable to load local insights." });
   }
 });
 

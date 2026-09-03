@@ -16,7 +16,19 @@ const starterPrompts = [
   "How do I compare ballot positions fairly?"
 ];
 
-function getFollowUpPrompts(firstQuestion) {
+function getFollowUpPrompts(firstQuestion, topics, cityState) {
+  const location = cityState || "my community";
+  const topic = topics[0];
+
+  if (topic) {
+    return [
+      `How could ${topic.toLowerCase()} affect voters in ${location}?`,
+      `What are the main ${topic.toLowerCase()} facts I should verify?`,
+      `What does ${topic.toLowerCase()} look like at the local level?`,
+      `What are the different perspectives on ${topic.toLowerCase()}?`
+    ];
+  }
+
   if (/measure|proposition|referendum|ballot/i.test(firstQuestion)) {
     return [
       "What would this measure change?",
@@ -77,6 +89,7 @@ function App() {
 
   // Ballot lookup
   const [ballot, setBallot] = useState(null);
+  const [trendingTopics, setTrendingTopics] = useState([]);
   const [ballotError, setBallotError] = useState("");
   const [loadingBallot, setLoadingBallot] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
@@ -93,7 +106,20 @@ function App() {
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
   const firstQuestion = conversation.find((message) => message.role === "user")?.content || "";
-  const suggestedPrompts = firstQuestion ? getFollowUpPrompts(firstQuestion) : starterPrompts;
+  const ballotOffices = (ballot?.contests || [])
+    .map((contest) => contest.office || contest.referendumTitle)
+    .filter(Boolean);
+  const personalTopics = [...new Set([...topIssues, ...trendingTopics, ...ballotOffices])];
+  const suggestedPrompts = firstQuestion
+    ? getFollowUpPrompts(firstQuestion, personalTopics, cityState)
+    : personalTopics.length
+      ? [
+          `What are voters asking about ${personalTopics[0].toLowerCase()} in ${cityState || "my area"}?`,
+          `What should I know about ${personalTopics[0].toLowerCase()} before voting?`,
+          `What are the key facts about ${personalTopics[0].toLowerCase()}?`,
+          ...starterPrompts.slice(0, 3)
+        ]
+      : starterPrompts;
   const currentPrompt = suggestedPrompts[promptIndex % suggestedPrompts.length];
 
   useEffect(() => {
@@ -237,6 +263,14 @@ function App() {
       if (conversationRes.ok) {
         const conversationData = await conversationRes.json();
         setConversation(conversationData.messages || []);
+      }
+
+      const insightsRes = await fetch(
+        `${API_BASE_URL}/insights/trending?zip=${encodeURIComponent(zip)}`
+      );
+      if (insightsRes.ok) {
+        const insightsData = await insightsRes.json();
+        setTrendingTopics(insightsData.topics || []);
       }
 
       setScreen("ballot");
