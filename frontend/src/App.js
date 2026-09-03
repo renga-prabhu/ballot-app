@@ -1,11 +1,56 @@
 // App.js — KnowYourBallot / The Civic Clarity Project — Guiding American Choices
 // Liquid UX + Hero-Only Liquid Gold + subtle patriotic palette
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "https://shimmering-success-production-bd96.up.railway.app";
 const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
+
+const starterPrompts = [
+  "Why should I vote?",
+  "What are the top issues being discussed in my district?",
+  "What are voters asking about today?",
+  "How can I understand the choices on my ballot?",
+  "What does each office on my ballot do?",
+  "How do I compare ballot positions fairly?"
+];
+
+function getFollowUpPrompts(firstQuestion) {
+  if (/measure|proposition|referendum|ballot/i.test(firstQuestion)) {
+    return [
+      "What would this measure change?",
+      "What are the main arguments on each side?",
+      "Who would be affected by this proposal?",
+      "What should I verify in the official ballot text?"
+    ];
+  }
+
+  if (/candidate|office|mayor|governor|commissioner|representative|senator/i.test(firstQuestion)) {
+    return [
+      "What are the responsibilities of this office?",
+      "What factual differences can I verify between the candidates?",
+      "What questions can help me evaluate their public positions?",
+      "Where can I find official candidate information?"
+    ];
+  }
+
+  if (/vote|registration|polling|mail|election day/i.test(firstQuestion)) {
+    return [
+      "What are the key dates I should know?",
+      "How does voting in this election work?",
+      "What identification or documents might I need?",
+      "Where can I find official voting instructions?"
+    ];
+  }
+
+  return [
+    "Can you explain that in simpler terms?",
+    "What are the strongest facts to verify?",
+    "How does this affect local government?",
+    "Where can I learn more from official sources?"
+  ];
+}
 
 function App() {
   const [userId] = useState(() => {
@@ -40,9 +85,26 @@ function App() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [conversation, setConversation] = useState([]);
+  const [promptIndex, setPromptIndex] = useState(0);
   const [loadingAI, setLoadingAI] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+
+  const firstQuestion = conversation.find((message) => message.role === "user")?.content || "";
+  const suggestedPrompts = firstQuestion ? getFollowUpPrompts(firstQuestion) : starterPrompts;
+  const currentPrompt = suggestedPrompts[promptIndex % suggestedPrompts.length];
+
+  useEffect(() => {
+    setPromptIndex(0);
+  }, [firstQuestion]);
+
+  useEffect(() => {
+    const promptTimer = window.setInterval(() => {
+      setPromptIndex((index) => index + 1);
+    }, 5000);
+
+    return () => window.clearInterval(promptTimer);
+  }, [suggestedPrompts.length]);
 
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent("Explore your ballot and build civic clarity with Know Your Ballot.");
@@ -249,7 +311,7 @@ function App() {
       )}
       <textarea
         style={styles.textarea}
-        placeholder="What would this ballot measure change in my community?"
+        placeholder={currentPrompt}
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
         onKeyDown={(e) => {
@@ -262,6 +324,16 @@ function App() {
       >
         {loadingAI ? "Thinking..." : conversation.length ? "Ask a follow-up" : "Get Civic Clarity"}
       </button>
+      <div style={styles.promptRow}>
+        <span style={styles.promptLabel}>{conversation.length ? "Try a follow-up" : "Try asking"}</span>
+        <button
+          type="button"
+          style={styles.promptSuggestion}
+          onClick={() => setQuestion(currentPrompt)}
+        >
+          {currentPrompt}
+        </button>
+      </div>
     </div>
   );
 
@@ -1001,6 +1073,35 @@ const styles = {
     lineHeight: "1.55",
     whiteSpace: "pre-wrap",
     overflowWrap: "anywhere"
+  },
+  promptRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "10px",
+    minWidth: 0
+  },
+  promptLabel: {
+    flexShrink: 0,
+    fontSize: "11px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: "0.7px",
+    color: "#B22234"
+  },
+  promptSuggestion: {
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    padding: "7px 10px",
+    border: "1px solid rgba(26,43,95,0.2)",
+    borderRadius: "9px",
+    background: "rgba(248,250,252,0.9)",
+    color: "#1A2B5F",
+    fontSize: "12px",
+    textAlign: "left",
+    cursor: "pointer"
   },
   answerTitle: {
     fontSize: "16px",
