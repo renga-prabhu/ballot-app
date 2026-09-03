@@ -128,7 +128,12 @@ function App() {
         })
       });
 
-      if (!profileRes.ok) throw new Error("Profile could not be saved");
+      const profileData = await profileRes.json();
+      if (!profileRes.ok) {
+        setBallotError(profileData.error || "We could not verify your request.");
+        setScreen("form");
+        return;
+      }
 
       const [city, state] = cityState.split(", ");
       const ballotRes = await fetch(`${API_BASE_URL}/ballot/lookup`, {
@@ -365,6 +370,7 @@ function App() {
                 <p style={styles.captchaMessage}>Verification is not configured yet.</p>
               )}
             </div>
+            {ballotError && <p style={styles.infoText}>{ballotError}</p>}
 
             {/* Continue */}
             <button
