@@ -258,7 +258,9 @@ function App() {
           ballotData.electionOffice?.votingLocationFinderUrl,
           ballotData.electionOffice?.electionRegistrationUrl,
           ...(ballotData.contests || []).flatMap((contest) =>
-            (contest.sources || []).map((source) => source.url).filter(Boolean)
+            (contest.sources || [])
+              .map((source) => source.url || source.sourceUrl)
+              .filter(Boolean)
           )
         ].filter((url, index, urls) => url && urls.indexOf(url) === index);
         setConversationSources(ballotSources);
@@ -314,7 +316,12 @@ function App() {
           politicalLean,
           topIssues,
           question: submittedQuestion,
-          sourceUrls: conversationSources
+          sourceUrls: conversationSources,
+          ballotContext: JSON.stringify({
+            election: ballot?.election || null,
+            specificity: ballot?.specificity || null,
+            contests: ballot?.contests || []
+          })
         })
       });
 
