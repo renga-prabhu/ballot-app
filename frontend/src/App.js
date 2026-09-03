@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "https://shimmering-success-production-bd96.up.railway.app";
-const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
+const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
 function App() {
   const [userId] = useState(() => crypto.randomUUID());

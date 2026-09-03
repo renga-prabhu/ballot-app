@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 4000;
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 const MONGO_URI = process.env.MONGO_URI;
 const GOOGLE_CIVIC_API_KEY = process.env.GOOGLE_CIVIC_API_KEY;
-const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET;
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET || "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe";
 
 // -----------------------------------------------------
 // MongoDB Connection
