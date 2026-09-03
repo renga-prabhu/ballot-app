@@ -101,7 +101,6 @@ function App() {
   const [promptIndex, setPromptIndex] = useState(0);
   const [loadingAI, setLoadingAI] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
-  const [shareMenuOpen, setShareMenuOpen] = useState(false);
 
   const firstQuestion = conversation.find((message) => message.role === "user")?.content || "";
   const ballotOffices = (ballot?.contests || [])
@@ -139,14 +138,14 @@ function App() {
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent("Explore your ballot and build civic clarity with Know Your Ballot.");
   const socialLinks = [
-    { name: "X", mark: "X", url: `https://x.com/intent/post?text=${shareText}&url=${shareUrl}` },
-    { name: "Bluesky", mark: "b", url: `https://bsky.app/intent/compose?text=${shareText}%20${shareUrl}` },
-    { name: "Facebook", mark: "f", url: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` },
-    { name: "LinkedIn", mark: "in", url: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}` },
-    { name: "WhatsApp", mark: "wa", url: `https://wa.me/?text=${shareText}%20${shareUrl}` },
-    { name: "Instagram", mark: "ig", url: "https://www.instagram.com/" },
-    { name: "TikTok", mark: "tk", url: "https://www.tiktok.com/" },
-    { name: "Reddit", mark: "r", url: `https://www.reddit.com/submit?url=${shareUrl}&title=${shareText}` }
+    { name: "X", icon: "https://cdn.simpleicons.org/x/FFFFFF", url: `https://x.com/intent/post?text=${shareText}&url=${shareUrl}` },
+    { name: "Bluesky", icon: "https://cdn.simpleicons.org/bluesky/FFFFFF", url: `https://bsky.app/intent/compose?text=${shareText}%20${shareUrl}` },
+    { name: "Facebook", icon: "https://cdn.simpleicons.org/facebook/FFFFFF", url: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` },
+    { name: "LinkedIn", icon: "https://cdn.simpleicons.org/linkedin/FFFFFF", url: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}` },
+    { name: "WhatsApp", icon: "https://cdn.simpleicons.org/whatsapp/FFFFFF", url: `https://wa.me/?text=${shareText}%20${shareUrl}` },
+    { name: "Instagram", icon: "https://cdn.simpleicons.org/instagram/FFFFFF", url: "https://www.instagram.com/" },
+    { name: "TikTok", icon: "https://cdn.simpleicons.org/tiktok/FFFFFF", url: "https://www.tiktok.com/" },
+    { name: "Reddit", icon: "https://cdn.simpleicons.org/reddit/FFFFFF", url: `https://www.reddit.com/submit?url=${shareUrl}&title=${shareText}` }
   ];
 
   const copySiteLink = async () => {
@@ -159,8 +158,8 @@ function App() {
     window.setTimeout(() => setShareStatus(""), 2500);
   };
 
-  const shareMenu = (
-    <div style={styles.shareMenu}>
+  const shareBar = (
+    <div style={styles.shareBar}>
       <div style={styles.socialGrid}>
         {socialLinks.map((social) => (
           <a
@@ -169,10 +168,11 @@ function App() {
             href={social.url}
             target="_blank"
             rel="noreferrer"
-            onClick={() => setShareMenuOpen(false)}
             title={`Share on ${social.name}`}
           >
-            <span style={styles.socialMark} aria-hidden="true">{social.mark}</span>
+            <span style={styles.socialMark}>
+              <img src={social.icon} alt="" aria-hidden="true" style={styles.socialIcon} />
+            </span>
             <span>{social.name}</span>
           </a>
         ))}
@@ -434,16 +434,7 @@ function App() {
               <p style={styles.heroTag}>
                 The Civic Clarity Project — Guiding American Choices
               </p>
-              <button
-                type="button"
-                style={styles.shareButton}
-                onClick={() => setShareMenuOpen((isOpen) => !isOpen)}
-                title="Share Know Your Ballot"
-                aria-label="Share Know Your Ballot"
-              >
-                <span aria-hidden="true">↗</span> Share this site
-              </button>
-              {shareMenuOpen && shareMenu}
+              {shareBar}
               {shareStatus && <p style={styles.shareStatus}>{shareStatus}</p>}
             </div>
           </div>
@@ -723,16 +714,7 @@ function App() {
             <p style={styles.heroLocation}>
               Serving voters in {cityState || "your community"} ({zip || "ZIP unknown"})
             </p>
-            <button
-              type="button"
-              style={styles.shareButton}
-              onClick={() => setShareMenuOpen((isOpen) => !isOpen)}
-              title="Share Know Your Ballot"
-              aria-label="Share Know Your Ballot"
-            >
-              <span aria-hidden="true">↗</span> Share this site
-            </button>
-            {shareMenuOpen && shareMenu}
+            {shareBar}
             {shareStatus && <p style={styles.shareStatus}>{shareStatus}</p>}
           </div>
         </div>
@@ -838,24 +820,13 @@ const styles = {
     marginTop: "10px",
     opacity: 0.9
   },
-  shareButton: {
-    marginTop: "16px",
-    padding: "9px 13px",
-    fontSize: "13px",
-    fontWeight: "600",
-    color: "#FFFFFF",
-    background: "rgba(255,255,255,0.16)",
-    border: "1px solid rgba(255,255,255,0.5)",
-    borderRadius: "10px",
-    cursor: "pointer"
-  },
   shareStatus: {
     display: "inline-block",
     fontSize: "12px",
     color: "#F7E27A",
     margin: "8px 0 0 10px"
   },
-  shareMenu: {
+  shareBar: {
     marginTop: "12px",
     padding: "12px",
     borderRadius: "12px",
@@ -890,6 +861,10 @@ const styles = {
     color: "#FFFFFF",
     fontSize: "14px",
     fontWeight: "700"
+  },
+  socialIcon: {
+    width: "16px",
+    height: "16px"
   },
   copyLink: {
     width: "100%",
