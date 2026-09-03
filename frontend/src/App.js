@@ -250,6 +250,10 @@ function App() {
         setBallot(ballotData);
         const ballotSources = [
           ballotData.electionOffice?.ballotInfoUrl,
+          ballotData.electionOffice?.electionInfoUrl,
+          ballotData.electionOffice?.electionRulesUrl,
+          ballotData.electionOffice?.votingLocationFinderUrl,
+          ballotData.electionOffice?.electionRegistrationUrl,
           ...(ballotData.contests || []).flatMap((contest) =>
             (contest.sources || []).map((source) => source.url).filter(Boolean)
           )
@@ -385,6 +389,9 @@ function App() {
               </a>
             ))}
           </div>
+        )}
+        {conversation.length > 0 && conversationSources.length === 0 && (
+          <p style={styles.noSources}>No applicable official source was returned for this answer.</p>
         )}
       <div style={styles.promptRow}>
         <span style={styles.promptLabel}>{conversation.length ? "Try a follow-up" : "Try asking"}</span>
@@ -1216,6 +1223,12 @@ const styles = {
     textTransform: "uppercase",
     letterSpacing: "0.7px",
     color: "#B22234"
+  },
+  noSources: {
+    fontSize: "12px",
+    lineHeight: "1.4",
+    color: "#6B7280",
+    margin: "10px 0 0"
   },
 
   /* FOOTER */
