@@ -3,6 +3,8 @@
 
 import React, { useState } from "react";
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || "https://shimmering-success-production-bd96.up.railway.app";
+
 function App() {
   const [userId] = useState(() => crypto.randomUUID());
 
@@ -51,7 +53,7 @@ function App() {
   // Continue → save profile → go to chat
   const continueToChat = async () => {
     try {
-      await fetch("http://localhost:4000/user/init", {
+      await fetch(`${API_BASE_URL}/user/init`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -74,7 +76,7 @@ function App() {
     setAnswer("");
 
     try {
-      const res = await fetch("http://localhost:4000/ai/explain", {
+      const res = await fetch(`${API_BASE_URL}/ai/explain`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
