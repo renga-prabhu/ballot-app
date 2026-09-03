@@ -221,6 +221,7 @@ app.post("/ballot/lookup", async (req, res) => {
 
     const data = civicRes.data;
     res.json({
+      status: data.contests?.length ? "verified" : "unverified",
       election: data.election || null,
       otherElections: data.otherElections || [],
       contests: data.contests || [],
@@ -230,9 +231,15 @@ app.post("/ballot/lookup", async (req, res) => {
     });
   } catch (err) {
     console.log("Ballot lookup error:", err.response?.data || err.message);
-    const statusCode = err.response?.status === 404 ? 404 : 502;
-    res.status(statusCode).json({
-      error: "No ballot information was found for that address.",
+    res.status(200).json({
+      status: "unverified",
+      election: null,
+      otherElections: [],
+      contests: [],
+      electionOffice: null,
+      specificity: address ? "exact" : "general",
+      source: "Google Civic Information API",
+      warning: "This is an unverified preview. Confirm exact ballot details with your official election office.",
       officialElectionUrl: "https://vote.gov/"
     });
   }

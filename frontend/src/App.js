@@ -607,6 +607,14 @@ function App() {
             {ballot?.election?.electionDay && (
               <p style={styles.electionDate}>Election day: {ballot.election.electionDay}</p>
             )}
+            {ballot?.status === "unverified" && (
+              <div style={styles.previewNotice}>
+                <strong>Unverified preview</strong>
+                <span>
+                  Information may be incomplete or general. Validate the exact contests, candidates, and measures with your official election office before voting.
+                </span>
+              </div>
+            )}
             {ballot?.specificity !== "exact" && (
               <p style={styles.caveat}>
                 General ZIP-based information. It may not include every county or district contest for your address.
@@ -615,8 +623,8 @@ function App() {
             {ballotError && <p style={styles.infoText}>{ballotError}</p>}
             {!ballotError && !contests.length && (
               <p style={styles.infoText}>
-                {ballot?.specificity === "exact"
-                  ? "Contest details are not available for this election yet."
+                {ballot?.status === "unverified"
+                  ? "No verified contest details are available for this lookup."
                   : "No ballot information is available for this ZIP code at this time."}
               </p>
             )}
@@ -653,6 +661,16 @@ function App() {
                 rel="noreferrer"
               >
                 Open official ballot information
+              </a>
+            )}
+            {ballot?.officialElectionUrl && !ballot?.electionOffice?.ballotInfoUrl && (
+              <a
+                style={styles.sourceLink}
+                href={ballot.officialElectionUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Verify details with your official election office
               </a>
             )}
           </div>
@@ -962,6 +980,19 @@ const styles = {
     borderLeft: "3px solid #EA580C",
     padding: "10px 12px",
     marginBottom: "16px"
+  },
+  previewNotice: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "5px",
+    fontSize: "13px",
+    lineHeight: "1.45",
+    color: "#7C2D12",
+    background: "rgba(234, 88, 12, 0.09)",
+    borderLeft: "3px solid #EA580C",
+    borderRadius: "0 9px 9px 0",
+    padding: "11px 12px",
+    marginBottom: "14px"
   },
   infoText: {
     fontSize: "14px",
