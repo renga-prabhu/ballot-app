@@ -1,10 +1,16 @@
 const mongoose = require("mongoose");
 
 const ProfileSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  userId: { type: String, index: true },
+  name: { type: String },
   email: { type: String },
   zipcode: { type: String },
   district: { type: String },
+  ageRange: { type: String },
+  politicalLean: { type: String },
+  topIssues: [{ type: String }],
+  zip: { type: String },
+  cityState: { type: String },
   createdAt: { type: Date, default: Date.now }
 });
 

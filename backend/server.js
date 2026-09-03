@@ -59,20 +59,35 @@ app.post("/submit", async (req, res) => {
 // -----------------------------------------------------
 // Save demographics
 // -----------------------------------------------------
-app.post("/user/init", (req, res) => {
-  const { userId, ageRange, politicalLean, topIssues } = req.body;
+app.post("/user/init", async (req, res) => {
+  const { userId, ageRange, politicalLean, topIssues, zip, cityState } = req.body;
 
   if (!userId) {
-    return res.json({ error: "Missing userId" });
+    return res.status(400).json({ error: "Missing userId" });
   }
 
-  userProfiles[userId] = {
+  const profileData = {
+    userId,
     ageRange,
     politicalLean,
-    topIssues
+    topIssues: Array.isArray(topIssues) ? topIssues : [],
+    zip,
+    cityState
   };
 
-  res.json({ success: true });
+  try {
+    await Profile.findOneAndUpdate(
+      { userId },
+      profileData,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    userProfiles[userId] = profileData;
+    res.json({ success: true });
+  } catch (err) {
+    console.log("Profile save error:", err.message);
+    res.status(500).json({ success: false, error: "Unable to save profile" });
+  }
 });
 
 // -----------------------------------------------------
