@@ -33,6 +33,7 @@ function App() {
   // AI chat
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
+  const [conversation, setConversation] = useState([]);
   const [loadingAI, setLoadingAI] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
@@ -160,8 +161,16 @@ function App() {
 
   // Ask AI
   const askAI = async () => {
+    const submittedQuestion = question.trim();
+    if (!submittedQuestion || loadingAI) return;
+
     setLoadingAI(true);
     setAnswer("");
+    setQuestion("");
+    setConversation((messages) => [
+      ...messages,
+      { role: "user", content: submittedQuestion }
+    ]);
 
     try {
       const res = await fetch(`${API_BASE_URL}/ai/explain`, {
@@ -174,14 +183,25 @@ function App() {
           ageRange,
           politicalLean,
           topIssues,
-          question
+          question: submittedQuestion,
+          conversationHistory: conversation
         })
       });
 
       const data = await res.json();
-      setAnswer(data.answer || data.error || "The Civic AI could not respond right now.");
+      const responseText = data.answer || data.error || "The Civic AI could not respond right now.";
+      setAnswer(responseText);
+      setConversation((messages) => [
+        ...messages,
+        { role: "assistant", content: responseText }
+      ]);
     } catch {
-      setAnswer("The Civic AI could not respond right now. Please try again.");
+      const responseText = "The Civic AI could not respond right now. Please try again.";
+      setAnswer(responseText);
+      setConversation((messages) => [
+        ...messages,
+        { role: "assistant", content: responseText }
+      ]);
     }
 
     setLoadingAI(false);
@@ -193,24 +213,42 @@ function App() {
       <p style={styles.sectionText}>
         Explore an office, issue, or process. The assistant explains and never tells you who to vote for.
       </p>
+      {conversation.length > 0 && (
+        <div style={styles.conversation} aria-live="polite">
+          {conversation.map((message, index) => (
+            <div
+              key={`${message.role}-${index}`}
+              style={message.role === "user" ? styles.userMessage : styles.assistantMessage}
+            >
+              <span style={styles.messageLabel}>
+                {message.role === "user" ? "You" : "Civic AI"}
+              </span>
+              <p style={styles.messageText}>{message.content}</p>
+            </div>
+          ))}
+          {loadingAI && (
+            <div style={styles.assistantMessage}>
+              <span style={styles.messageLabel}>Civic AI</span>
+              <p style={styles.messageText}>Reviewing your question...</p>
+            </div>
+          )}
+        </div>
+      )}
       <textarea
         style={styles.textarea}
         placeholder="What would this ballot measure change in my community?"
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) askAI();
+        }}
       />
       <button
-        style={question && !loadingAI ? styles.button : styles.buttonDisabled}
-        onClick={question && !loadingAI ? askAI : null}
+        style={question.trim() && !loadingAI ? styles.button : styles.buttonDisabled}
+        onClick={question.trim() && !loadingAI ? askAI : null}
       >
-        {loadingAI ? "Thinking..." : "Get Civic Clarity"}
+        {loadingAI ? "Thinking..." : conversation.length ? "Ask a follow-up" : "Get Civic Clarity"}
       </button>
-      {answer && (
-        <div style={styles.answerBlock}>
-          <h3 style={styles.answerTitle}>AI Explanation</h3>
-          <p style={styles.answerText}>{answer}</p>
-        </div>
-      )}
     </div>
   );
 
@@ -909,6 +947,47 @@ const styles = {
     borderTop: "1px solid rgba(26,43,95,0.12)",
     marginTop: "18px",
     paddingTop: "16px"
+  },
+  conversation: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    maxHeight: "440px",
+    overflowY: "auto",
+    marginBottom: "16px",
+    padding: "2px"
+  },
+  userMessage: {
+    alignSelf: "flex-end",
+    width: "min(88%, 500px)",
+    padding: "12px 14px",
+    borderRadius: "14px 14px 4px 14px",
+    background: "#1A2B5F",
+    color: "#FFFFFF"
+  },
+  assistantMessage: {
+    alignSelf: "flex-start",
+    width: "min(92%, 520px)",
+    padding: "12px 14px",
+    borderRadius: "14px 14px 14px 4px",
+    background: "rgba(26,43,95,0.08)",
+    border: "1px solid rgba(26,43,95,0.12)",
+    color: "#111827"
+  },
+  messageLabel: {
+    display: "block",
+    fontSize: "11px",
+    fontWeight: "700",
+    letterSpacing: "0.5px",
+    marginBottom: "5px",
+    opacity: 0.75
+  },
+  messageText: {
+    margin: 0,
+    fontSize: "14px",
+    lineHeight: "1.55",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere"
   },
   answerTitle: {
     fontSize: "16px",
