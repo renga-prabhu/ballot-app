@@ -141,7 +141,7 @@ function App() {
     { name: "X", icon: "https://cdn.simpleicons.org/x/000000", url: `https://x.com/intent/post?text=${shareText}&url=${shareUrl}` },
     { name: "Bluesky", icon: "https://cdn.simpleicons.org/bluesky/1185FE", url: `https://bsky.app/intent/compose?text=${shareText}%20${shareUrl}` },
     { name: "Facebook", icon: "https://cdn.simpleicons.org/facebook/1877F2", url: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` },
-    { name: "LinkedIn", icon: "https://cdn.simpleicons.org/linkedin/0A66C2", url: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}` },
+    { name: "LinkedIn", icon: "https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/linkedin.svg", url: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}` },
     { name: "WhatsApp", icon: "https://cdn.simpleicons.org/whatsapp/25D366", url: `https://wa.me/?text=${shareText}%20${shareUrl}` },
     { name: "Instagram", icon: "https://cdn.simpleicons.org/instagram/E4405F", url: "https://www.instagram.com/" },
     { name: "TikTok", icon: "https://cdn.simpleicons.org/tiktok/000000", url: "https://www.tiktok.com/" },
