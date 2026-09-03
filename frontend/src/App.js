@@ -21,6 +21,11 @@ function App() {
   const [cityState, setCityState] = useState("");
   const [zipValid, setZipValid] = useState(false);
 
+  // Ballot lookup
+  const [ballot, setBallot] = useState(null);
+  const [ballotError, setBallotError] = useState("");
+  const [loadingBallot, setLoadingBallot] = useState(false);
+
   // AI chat
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
@@ -50,10 +55,13 @@ function App() {
     }
   };
 
-  // Continue → save profile → go to chat
-  const continueToChat = async () => {
+  // Continue → save profile → load ballot
+  const continueToBallot = async () => {
+    setLoadingBallot(true);
+    setBallotError("");
+
     try {
-      await fetch(`${API_BASE_URL}/user/init`, {
+      const profileRes = await fetch(`${API_BASE_URL}/user/init`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -66,9 +74,28 @@ function App() {
         })
       });
 
-      setScreen("chat");
+      if (!profileRes.ok) throw new Error("Profile could not be saved");
+
+      const [city, state] = cityState.split(", ");
+      const ballotRes = await fetch(`${API_BASE_URL}/ballot/lookup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ city, state, zip })
+      });
+      const ballotData = await ballotRes.json();
+
+      if (!ballotRes.ok) {
+        setBallotError(ballotData.error || "Ballot information is unavailable right now.");
+      } else {
+        setBallot(ballotData);
+      }
+
+      setScreen("ballot");
     } catch {
-      alert("Error saving your info. Try again.");
+      setBallotError("We could not load your ballot. Please try again.");
+      setScreen("ballot");
+    } finally {
+      setLoadingBallot(false);
     }
   };
 
@@ -100,6 +127,33 @@ function App() {
 
     setLoadingAI(false);
   };
+
+  const aiPanel = (
+    <div style={styles.card}>
+      <h2 style={styles.sectionTitle}>Ask the Civic AI</h2>
+      <p style={styles.sectionText}>
+        Explore an office, issue, or process. The assistant explains and never tells you who to vote for.
+      </p>
+      <textarea
+        style={styles.textarea}
+        placeholder="What does this office do?"
+        value={question}
+        onChange={(e) => setQuestion(e.target.value)}
+      />
+      <button
+        style={question && !loadingAI ? styles.button : styles.buttonDisabled}
+        onClick={question && !loadingAI ? askAI : null}
+      >
+        {loadingAI ? "Thinking..." : "Get Civic Clarity"}
+      </button>
+      {answer && (
+        <div style={styles.answerBlock}>
+          <h3 style={styles.answerTitle}>AI Explanation</h3>
+          <p style={styles.answerText}>{answer}</p>
+        </div>
+      )}
+    </div>
+  );
 
   // FORM SCREEN
   if (screen === "form") {
@@ -226,9 +280,11 @@ function App() {
             {/* Continue */}
             <button
               style={
-                zipValid && ageRange ? styles.button : styles.buttonDisabled
+                zipValid && ageRange && !loadingBallot
+                  ? styles.button
+                  : styles.buttonDisabled
               }
-              onClick={zipValid && ageRange ? continueToChat : null}
+              onClick={zipValid && ageRange && !loadingBallot ? continueToBallot : null}
             >
               Continue to Civic AI
             </button>
@@ -238,6 +294,88 @@ function App() {
           <div style={styles.footer}>
             <span style={styles.footerText}>
               Built for American voters. Non‑partisan. No endorsements. Just clarity.
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // BALLOT SCREEN
+  if (screen === "ballot") {
+    const contests = ballot?.contests || [];
+
+    return (
+      <div style={styles.appShell}>
+        <div style={styles.container}>
+          <div style={styles.hero}>
+            <div style={styles.star1}>★</div>
+            <div style={styles.star2}>★</div>
+            <div style={styles.star3}>★</div>
+            <div style={styles.heroGlass}>
+              <p style={styles.eyebrow}>Your civic snapshot</p>
+              <h1 style={styles.heroTitle}>Know Your Ballot</h1>
+              <div style={styles.heroGoldLine}></div>
+              <p style={styles.heroLocation}>{cityState} · {zip}</p>
+            </div>
+          </div>
+
+          <div style={styles.card}>
+            <p style={styles.eyebrow}>Step 2 of 2</p>
+            <h2 style={styles.sectionTitle}>
+              {ballot?.election?.name || "Upcoming ballot"}
+            </h2>
+            {ballot?.election?.electionDay && (
+              <p style={styles.electionDate}>Election day: {ballot.election.electionDay}</p>
+            )}
+            {ballotError && <p style={styles.errorText}>{ballotError}</p>}
+            {!ballotError && !contests.length && (
+              <p style={styles.sectionText}>
+                No current ballot contests were returned for this address. Check your official election office for the latest information.
+              </p>
+            )}
+            {!!contests.length && (
+              <div style={styles.contestList}>
+                {contests.map((contest, index) => (
+                  <button
+                    key={`${contest.office || contest.referendumTitle || "contest"}-${index}`}
+                    style={styles.contest}
+                    onClick={() => setQuestion(`Please explain the ${contest.office || contest.referendumTitle || "contest"} on my ballot.`)}
+                  >
+                    <span style={styles.contestType}>{contest.type || "Contest"}</span>
+                    <strong style={styles.contestTitle}>
+                      {contest.office || contest.referendumTitle || "Ballot measure"}
+                    </strong>
+                    {contest.district?.name && (
+                      <span style={styles.contestMeta}>{contest.district.name}</span>
+                    )}
+                    {contest.candidates?.length > 0 && (
+                      <span style={styles.contestMeta}>
+                        {contest.candidates.map((candidate) => candidate.name).join(" · ")}
+                      </span>
+                    )}
+                    <span style={styles.exploreHint}>Ask about this →</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {ballot?.electionOffice?.ballotInfoUrl && (
+              <a
+                style={styles.sourceLink}
+                href={ballot.electionOffice.ballotInfoUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open official ballot information
+              </a>
+            )}
+          </div>
+
+          {aiPanel}
+
+          <div style={styles.footer}>
+            <span style={styles.footerText}>
+              Ballot data comes from official election sources. KnowYourBallot does not endorse candidates or parties.
             </span>
           </div>
         </div>
@@ -416,11 +554,82 @@ const styles = {
     fontWeight: "600",
     color: "#1A2B5F"
   },
+  eyebrow: {
+    fontSize: "11px",
+    fontWeight: "700",
+    letterSpacing: "1.4px",
+    textTransform: "uppercase",
+    color: "#B22234",
+    marginBottom: "8px"
+  },
   sectionText: {
     fontSize: "14px",
     marginBottom: "16px",
     lineHeight: "1.5",
     color: "#4B5563"
+  },
+  electionDate: {
+    fontSize: "14px",
+    color: "#4B5563",
+    marginBottom: "16px"
+  },
+  errorText: {
+    fontSize: "14px",
+    lineHeight: "1.5",
+    color: "#9F1239",
+    background: "rgba(190, 24, 93, 0.08)",
+    borderRadius: "10px",
+    padding: "12px",
+    marginBottom: "12px"
+  },
+  contestList: {
+    display: "grid",
+    gap: "10px"
+  },
+  contest: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    width: "100%",
+    textAlign: "left",
+    padding: "15px",
+    borderRadius: "12px",
+    border: "1px solid rgba(26,43,95,0.16)",
+    background: "rgba(248,250,252,0.86)",
+    cursor: "pointer",
+    color: "#111827"
+  },
+  contestType: {
+    fontSize: "11px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: "0.8px",
+    color: "#B22234",
+    marginBottom: "5px"
+  },
+  contestTitle: {
+    fontSize: "16px",
+    lineHeight: "1.3",
+    color: "#1A2B5F",
+    marginBottom: "4px"
+  },
+  contestMeta: {
+    fontSize: "13px",
+    lineHeight: "1.4",
+    color: "#4B5563"
+  },
+  exploreHint: {
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "#1A2B5F",
+    marginTop: "9px"
+  },
+  sourceLink: {
+    display: "inline-block",
+    marginTop: "16px",
+    color: "#1A2B5F",
+    fontSize: "13px",
+    fontWeight: "600"
   },
 
   /* INPUTS */
@@ -490,6 +699,16 @@ const styles = {
     lineHeight: "1.6",
     color: "#111827",
     whiteSpace: "pre-wrap"
+  },
+  answerBlock: {
+    borderTop: "1px solid rgba(26,43,95,0.12)",
+    marginTop: "18px",
+    paddingTop: "16px"
+  },
+  answerTitle: {
+    fontSize: "16px",
+    color: "#1A2B5F",
+    marginBottom: "8px"
   },
 
   /* FOOTER */

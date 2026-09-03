@@ -20,6 +20,7 @@ app.use(express.json());
 const PORT = process.env.PORT || 4000;
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 const MONGO_URI = process.env.MONGO_URI;
+const GOOGLE_CIVIC_API_KEY = process.env.GOOGLE_CIVIC_API_KEY;
 
 // -----------------------------------------------------
 // MongoDB Connection
@@ -87,6 +88,50 @@ app.post("/user/init", async (req, res) => {
   } catch (err) {
     console.log("Profile save error:", err.message);
     res.status(500).json({ success: false, error: "Unable to save profile" });
+  }
+});
+
+// -----------------------------------------------------
+// Look up the user's current ballot
+// -----------------------------------------------------
+app.post("/ballot/lookup", async (req, res) => {
+  const { city, state, zip } = req.body;
+
+  if (!city || !state || !zip) {
+    return res.status(400).json({ error: "A valid ZIP code is required." });
+  }
+
+  if (!GOOGLE_CIVIC_API_KEY) {
+    return res.status(503).json({ error: "Ballot lookup is not configured yet." });
+  }
+
+  try {
+    const civicRes = await axios.get(
+      "https://www.googleapis.com/civicinfo/v2/voterinfo",
+      {
+        params: {
+          address: `${city}, ${state} ${zip}`,
+          officialOnly: true,
+          key: GOOGLE_CIVIC_API_KEY
+        }
+      }
+    );
+
+    const data = civicRes.data;
+    res.json({
+      election: data.election || null,
+      otherElections: data.otherElections || [],
+      contests: data.contests || [],
+      electionOffice: data.state?.[0]?.electionAdministrationBody || null,
+      source: "Google Civic Information API"
+    });
+  } catch (err) {
+    console.log("Ballot lookup error:", err.response?.data || err.message);
+    const statusCode = err.response?.status === 404 ? 404 : 502;
+    res.status(statusCode).json({
+      error: "No ballot information was found for that address.",
+      officialElectionUrl: "https://vote.gov/"
+    });
   }
 });
 
