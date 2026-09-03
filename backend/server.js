@@ -352,7 +352,7 @@ app.post("/ai/explain", aiLimiter, async (req, res) => {
     return res.status(500).json({ error: "Unable to load conversation." });
   }
 
-  const recommendationRequest = /who should I vote for|which candidate should I vote for|who should I support|which one is better|rank (the )?candidates|best candidate|match me with|recommend (a|the) candidate|personalized voting recommendation|tell me who to vote for/i.test(question);
+  const recommendationRequest = /who should (I|i) (vote for|pick|choose|support)|which candidate should (I|i) (vote for|pick|choose|support)|what candidate should (I|i) (pick|choose|support)|who should (I|i) support|which one is better|rank (the )?candidates|best candidate|match me with|recommend (a|the) candidate|personalized voting recommendation|tell me who to vote for|who is the best (candidate|president|senator|governor)/i.test(question);
 
   if (recommendationRequest) {
     const refusal = "I cannot recommend, rank, or match you with candidates. I can explain the offices, summarize ballot items, compare publicly stated positions fairly, or describe how the voting process works.";
