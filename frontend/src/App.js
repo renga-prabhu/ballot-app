@@ -86,7 +86,7 @@ function App() {
       const ballotData = await ballotRes.json();
 
       if (!ballotRes.ok) {
-        setBallotError(ballotData.error || "Ballot information is unavailable right now.");
+        setBallotError("No ballot information is available for this ZIP code at this time.");
       } else {
         setBallot(ballotData);
       }
@@ -334,9 +334,8 @@ function App() {
           </div>
 
           <div style={styles.card}>
-            <p style={styles.eyebrow}>Step 2 of 2</p>
             <h2 style={styles.sectionTitle}>
-              {ballot?.election?.name || "Upcoming ballot"}
+              {ballot?.election?.name || "Ballot information"}
             </h2>
             {ballot?.election?.electionDay && (
               <p style={styles.electionDate}>Election day: {ballot.election.electionDay}</p>
@@ -346,10 +345,10 @@ function App() {
                 General ZIP-based information. It may not include every county or district contest for your address.
               </p>
             )}
-            {ballotError && <p style={styles.errorText}>{ballotError}</p>}
+            {ballotError && <p style={styles.infoText}>{ballotError}</p>}
             {!ballotError && !contests.length && (
-              <p style={styles.sectionText}>
-                No current ballot contests were returned for this address. Check your official election office for the latest information.
+              <p style={styles.infoText}>
+                No ballot information is available for this ZIP code at this time.
               </p>
             )}
             {!!contests.length && (
@@ -607,11 +606,11 @@ const styles = {
     padding: "10px 12px",
     marginBottom: "16px"
   },
-  errorText: {
+  infoText: {
     fontSize: "14px",
     lineHeight: "1.5",
-    color: "#9F1239",
-    background: "rgba(190, 24, 93, 0.08)",
+    color: "#4B5563",
+    background: "rgba(26,43,95,0.06)",
     borderRadius: "10px",
     padding: "12px",
     marginBottom: "12px"
