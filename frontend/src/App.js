@@ -138,14 +138,14 @@ function App() {
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent("Explore your ballot and build civic clarity with Know Your Ballot.");
   const socialLinks = [
-    { name: "X", icon: "https://cdn.simpleicons.org/x/FFFFFF", url: `https://x.com/intent/post?text=${shareText}&url=${shareUrl}` },
-    { name: "Bluesky", icon: "https://cdn.simpleicons.org/bluesky/FFFFFF", url: `https://bsky.app/intent/compose?text=${shareText}%20${shareUrl}` },
-    { name: "Facebook", icon: "https://cdn.simpleicons.org/facebook/FFFFFF", url: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` },
-    { name: "LinkedIn", icon: "https://cdn.simpleicons.org/linkedin/FFFFFF", url: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}` },
-    { name: "WhatsApp", icon: "https://cdn.simpleicons.org/whatsapp/FFFFFF", url: `https://wa.me/?text=${shareText}%20${shareUrl}` },
-    { name: "Instagram", icon: "https://cdn.simpleicons.org/instagram/FFFFFF", url: "https://www.instagram.com/" },
-    { name: "TikTok", icon: "https://cdn.simpleicons.org/tiktok/FFFFFF", url: "https://www.tiktok.com/" },
-    { name: "Reddit", icon: "https://cdn.simpleicons.org/reddit/FFFFFF", url: `https://www.reddit.com/submit?url=${shareUrl}&title=${shareText}` }
+    { name: "X", icon: "https://cdn.simpleicons.org/x/000000", url: `https://x.com/intent/post?text=${shareText}&url=${shareUrl}` },
+    { name: "Bluesky", icon: "https://cdn.simpleicons.org/bluesky/1185FE", url: `https://bsky.app/intent/compose?text=${shareText}%20${shareUrl}` },
+    { name: "Facebook", icon: "https://cdn.simpleicons.org/facebook/1877F2", url: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}` },
+    { name: "LinkedIn", icon: "https://cdn.simpleicons.org/linkedin/0A66C2", url: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}` },
+    { name: "WhatsApp", icon: "https://cdn.simpleicons.org/whatsapp/25D366", url: `https://wa.me/?text=${shareText}%20${shareUrl}` },
+    { name: "Instagram", icon: "https://cdn.simpleicons.org/instagram/E4405F", url: "https://www.instagram.com/" },
+    { name: "TikTok", icon: "https://cdn.simpleicons.org/tiktok/000000", url: "https://www.tiktok.com/" },
+    { name: "Reddit", icon: "https://cdn.simpleicons.org/reddit/FF4500", url: `https://www.reddit.com/submit?url=${shareUrl}&title=${shareText}` }
   ];
 
   const copySiteLink = async () => {
@@ -176,10 +176,13 @@ function App() {
             <span>{social.name}</span>
           </a>
         ))}
+        <button type="button" style={styles.socialLink} onClick={copySiteLink} title="Copy site link">
+          <span style={{ ...styles.socialMark, background: "#D4AF37" }}>
+            <span aria-hidden="true" style={styles.copyMark}>↗</span>
+          </span>
+          <span>Copy link</span>
+        </button>
       </div>
-      <button type="button" style={styles.copyLink} onClick={copySiteLink}>
-        Copy link
-      </button>
     </div>
   );
 
@@ -849,7 +852,11 @@ const styles = {
     color: "#1A2B5F",
     textDecoration: "none",
     fontSize: "11px",
-    fontWeight: "600"
+    fontWeight: "600",
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    fontFamily: "inherit"
   },
   socialMark: {
     display: "grid",
@@ -857,8 +864,8 @@ const styles = {
     width: "30px",
     height: "30px",
     borderRadius: "50%",
-    background: "#1A2B5F",
-    color: "#FFFFFF",
+    background: "#FFFFFF",
+    border: "1px solid rgba(255,255,255,0.7)",
     fontSize: "14px",
     fontWeight: "700"
   },
@@ -866,17 +873,10 @@ const styles = {
     width: "16px",
     height: "16px"
   },
-  copyLink: {
-    width: "100%",
-    marginTop: "10px",
-    padding: "9px",
-    border: "1px solid rgba(26,43,95,0.24)",
-    borderRadius: "8px",
-    background: "#FFFFFF",
-    color: "#1A2B5F",
-    fontSize: "12px",
-    fontWeight: "600",
-    cursor: "pointer"
+  copyMark: {
+    fontSize: "18px",
+    lineHeight: 1,
+    transform: "rotate(-45deg)"
   },
 
   /* LIQUID GOLD STARS */
