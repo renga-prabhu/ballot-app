@@ -60,7 +60,9 @@ function App() {
           userId,
           ageRange,
           politicalLean,
-          topIssues
+          topIssues,
+          zip,
+          cityState
         })
       });
 
