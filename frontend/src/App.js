@@ -65,13 +65,11 @@ function getFollowUpPrompts(firstQuestion, topics, cityState) {
 }
 
 function App() {
-  const [userId] = useState(() => {
-    const savedUserId = window.localStorage.getItem("know-your-ballot-user-id");
-    if (savedUserId) return savedUserId;
-    const newUserId = crypto.randomUUID();
-    window.localStorage.setItem("know-your-ballot-user-id", newUserId);
-    return newUserId;
-  });
+  const [userId, setUserId] = useState(() => crypto.randomUUID());
+
+  useEffect(() => {
+    window.localStorage.removeItem("know-your-ballot-user-id");
+  }, []);
 
   // Screen control
   const [screen, setScreen] = useState("form");
@@ -211,6 +209,11 @@ function App() {
 
   // Continue → save profile → load ballot
   const continueToBallot = async () => {
+    const newSessionUserId = crypto.randomUUID();
+    setUserId(newSessionUserId);
+    setConversation([]);
+    setConversationSources([]);
+    setTrendingTopics([]);
     setLoadingBallot(true);
     setBallotError("");
 
@@ -219,7 +222,7 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId,
+          userId: newSessionUserId,
           ageRange,
           politicalLean,
           topIssues,
@@ -262,7 +265,7 @@ function App() {
       }
 
       const conversationRes = await fetch(
-        `${API_BASE_URL}/conversation/${userId}?zip=${encodeURIComponent(zip)}`
+        `${API_BASE_URL}/conversation/${newSessionUserId}?zip=${encodeURIComponent(zip)}`
       );
       if (conversationRes.ok) {
         const conversationData = await conversationRes.json();
