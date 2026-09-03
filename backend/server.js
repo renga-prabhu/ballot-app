@@ -108,22 +108,35 @@ app.post("/ai/explain", async (req, res) => {
     return res.json({ error: "Missing required fields." });
   }
 
-  const userProfile = userProfiles[userId];
-  if (!userProfile) {
-    return res.json({ error: "User profile not found." });
+  let userProfile;
+  try {
+    userProfile = await Profile.findOne({ userId }).lean();
+  } catch (err) {
+    console.log("Profile lookup error:", err.message);
+    return res.status(500).json({ error: "Unable to load user profile." });
   }
+
+  if (!userProfile) {
+    return res.status(404).json({ error: "User profile not found." });
+  }
+
+  const profileAgeRange = userProfile.ageRange || ageRange;
+  const profilePoliticalLean = userProfile.politicalLean || politicalLean;
+  const profileTopIssues = userProfile.topIssues || topIssues || [];
+  const profileZip = userProfile.zip || zip;
+  const profileCityState = userProfile.cityState || cityState;
 
   const prompt = `
 You are a non-partisan civic literacy assistant.
 
 User profile (anonymous):
-- Age range: ${ageRange}
-- Political lean: ${politicalLean || "Not provided"}
-- Top issues: ${topIssues.join(", ")}
+  - Age range: ${profileAgeRange}
+  - Political lean: ${profilePoliticalLean || "Not provided"}
+  - Top issues: ${profileTopIssues.join(", ")}
 
 Location:
-- ZIP: ${zip}
-- City/State: ${cityState}
+- ZIP: ${profileZip}
+- City/State: ${profileCityState}
 
 Voter Question:
 ${question}
