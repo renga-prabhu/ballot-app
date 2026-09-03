@@ -12,6 +12,11 @@ const ConversationSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true, index: true },
     zip: { type: String, required: true },
+    messageCount: { type: Number, default: 0 },
+    startedAt: { type: Date, default: Date.now },
+    lastMessageAt: { type: Date, default: Date.now },
+    topics: { type: [String], default: [] },
+    requestType: { type: String, default: "general" },
     messages: { type: [MessageSchema], default: [] }
   },
   { timestamps: true }
