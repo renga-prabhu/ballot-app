@@ -8,7 +8,13 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || "https://shimmering-succes
 const RECAPTCHA_SITE_KEY = process.env.REACT_APP_RECAPTCHA_SITE_KEY || "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI";
 
 function App() {
-  const [userId] = useState(() => crypto.randomUUID());
+  const [userId] = useState(() => {
+    const savedUserId = window.localStorage.getItem("know-your-ballot-user-id");
+    if (savedUserId) return savedUserId;
+    const newUserId = crypto.randomUUID();
+    window.localStorage.setItem("know-your-ballot-user-id", newUserId);
+    return newUserId;
+  });
 
   // Screen control
   const [screen, setScreen] = useState("form");
@@ -150,6 +156,14 @@ function App() {
         setBallot(ballotData);
       }
 
+      const conversationRes = await fetch(
+        `${API_BASE_URL}/conversation/${userId}?zip=${encodeURIComponent(zip)}`
+      );
+      if (conversationRes.ok) {
+        const conversationData = await conversationRes.json();
+        setConversation(conversationData.messages || []);
+      }
+
       setScreen("ballot");
     } catch {
       setBallotError("We could not load your ballot. Please try again.");
@@ -183,8 +197,7 @@ function App() {
           ageRange,
           politicalLean,
           topIssues,
-          question: submittedQuestion,
-          conversationHistory: conversation
+          question: submittedQuestion
         })
       });
 
