@@ -1,7 +1,7 @@
 // App.js — KnowYourBallot / The Civic Clarity Project — Guiding American Choices
 // Liquid UX + Hero-Only Liquid Gold + subtle patriotic palette
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || "https://shimmering-success-production-bd96.up.railway.app";
@@ -85,6 +85,8 @@ function App() {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [conversation, setConversation] = useState([]);
+  const [conversationSources, setConversationSources] = useState([]);
+  const conversationEndRef = useRef(null);
   const [promptIndex, setPromptIndex] = useState(0);
   const [loadingAI, setLoadingAI] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
@@ -105,6 +107,10 @@ function App() {
 
     return () => window.clearInterval(promptTimer);
   }, [suggestedPrompts.length]);
+
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [conversation, loadingAI]);
 
   const shareUrl = encodeURIComponent(window.location.href);
   const shareText = encodeURIComponent("Explore your ballot and build civic clarity with Know Your Ballot.");
@@ -216,6 +222,13 @@ function App() {
         setBallotError("No ballot information is available for this ZIP code at this time.");
       } else {
         setBallot(ballotData);
+        const ballotSources = [
+          ballotData.electionOffice?.ballotInfoUrl,
+          ...(ballotData.contests || []).flatMap((contest) =>
+            (contest.sources || []).map((source) => source.url).filter(Boolean)
+          )
+        ].filter((url, index, urls) => url && urls.indexOf(url) === index);
+        setConversationSources(ballotSources);
       }
 
       const conversationRes = await fetch(
@@ -259,13 +272,17 @@ function App() {
           ageRange,
           politicalLean,
           topIssues,
-          question: submittedQuestion
+          question: submittedQuestion,
+          sourceUrls: conversationSources
         })
       });
 
       const data = await res.json();
       const responseText = data.answer || data.error || "The Civic AI could not respond right now.";
       setAnswer(responseText);
+      if (Array.isArray(data.sources) && data.sources.length > 0) {
+        setConversationSources(data.sources);
+      }
       setConversation((messages) => [
         ...messages,
         { role: "assistant", content: responseText }
@@ -307,6 +324,7 @@ function App() {
               <p style={styles.messageText}>Reviewing your question...</p>
             </div>
           )}
+          <div ref={conversationEndRef} />
         </div>
       )}
       <textarea
@@ -324,6 +342,16 @@ function App() {
       >
         {loadingAI ? "Thinking..." : conversation.length ? "Ask a follow-up" : "Get Civic Clarity"}
       </button>
+        {conversationSources.length > 0 && (
+          <div style={styles.sources}>
+            <span style={styles.sourcesLabel}>Sources</span>
+            {conversationSources.map((sourceUrl) => (
+              <a key={sourceUrl} href={sourceUrl} target="_blank" rel="noreferrer" style={styles.sourceLink}>
+                {new URL(sourceUrl).hostname.replace(/^www\./, "")}
+              </a>
+            ))}
+          </div>
+        )}
       <div style={styles.promptRow}>
         <span style={styles.promptLabel}>{conversation.length ? "Try a follow-up" : "Try asking"}</span>
         <button
@@ -1107,6 +1135,22 @@ const styles = {
     fontSize: "16px",
     color: "#1A2B5F",
     marginBottom: "8px"
+  },
+  sources: {
+    display: "flex",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "7px",
+    marginTop: "12px",
+    paddingTop: "11px",
+    borderTop: "1px solid rgba(26,43,95,0.1)"
+  },
+  sourcesLabel: {
+    fontSize: "11px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: "0.7px",
+    color: "#B22234"
   },
 
   /* FOOTER */
